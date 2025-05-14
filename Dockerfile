@@ -1,11 +1,13 @@
-FROM gradle:8.14.0-jdk24-alpine AS build
+FROM gradle:jdk23 AS build
 WORKDIR /app
-COPY --chown=gradle:gradle . .
-RUN gradle build --no-daemon -x test
+COPY build.gradle.kts settings.gradle.kts ./
+RUN gradle --version
+COPY src ./src
+RUN gradle bootJar -x test --no-daemon
 
-FROM eclipse-temurin:24-jdk-alpine
+# Runtime stage
+FROM eclipse-temurin:23-jdk
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
-
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app/*.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
